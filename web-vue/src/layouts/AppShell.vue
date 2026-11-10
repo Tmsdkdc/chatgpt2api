@@ -35,7 +35,7 @@
         <div class="flex h-16 items-center px-5 pt-4 lg:h-20 lg:pt-5">
           <div class="flex min-w-0 items-center">
             <a
-              href="https://github.com/yukkcat/chatgpt2api"
+              href="https://github.com/Tmsdkdc/chatgpt2api"
               target="_blank"
               rel="noopener noreferrer"
               class="shell-sidebar-brand shrink-0 text-foreground transition-colors hover:text-primary"
@@ -257,18 +257,6 @@
                   </Button>
                 </Tooltip>
               </span>
-              <span class="hidden lg:inline-flex">
-                <Tooltip text="交流与服务" placement="bottom">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    aria-label="交流与服务"
-                    @click="isServiceDialogOpen = true"
-                  >
-                    服务
-                  </Button>
-                </Tooltip>
-              </span>
               <span v-if="authStore.isAdmin" class="hidden lg:inline-flex">
                 <Tooltip :text="`查看版本更新，当前 ${currentVersionLabel || '版本未知'}`" placement="bottom">
                   <Button
@@ -350,44 +338,6 @@
       @confirm="confirmDialog.confirm"
       @cancel="confirmDialog.cancel"
     />
-    <ModalShell
-      :open="isServiceDialogOpen"
-      max-width="min(22rem, calc(100vw - 24px))"
-      :z-index="100"
-      panel-class="w-full p-5"
-      close-on-backdrop
-      aria-label="交流与服务"
-      @close="isServiceDialogOpen = false"
-    >
-      <ModalHeader
-        title="交流与服务"
-        title-class="ui-subsection-title"
-        :bordered="false"
-        flush
-        @close="isServiceDialogOpen = false"
-      />
-
-      <div class="mt-4 grid gap-2">
-        <a
-          v-for="item in headerServiceItems"
-          :key="item.key"
-          :href="item.href"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="shell-service-link group flex min-w-0 items-center gap-3 rounded-lg border border-border px-3 py-2.5 text-left transition-colors hover:border-[hsl(var(--foreground)_/_0.24)] hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          @click="isServiceDialogOpen = false"
-        >
-          <span class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors group-hover:text-foreground">
-            <Icon :icon="item.icon" class="h-4 w-4" />
-          </span>
-          <span class="min-w-0 flex-1">
-            <span class="block text-sm font-medium text-foreground">{{ item.label }}</span>
-            <span v-if="item.detail" class="mt-0.5 block text-xs leading-5 text-muted-foreground">{{ item.detail }}</span>
-          </span>
-          <Icon icon="lucide:external-link" class="h-3.5 w-3.5 shrink-0 text-muted-foreground transition-colors group-hover:text-foreground" />
-        </a>
-      </div>
-    </ModalShell>
     <ModalShell
       :open="isApiInfoOpen"
       :z-index="100"
@@ -738,7 +688,6 @@ const sidebarToggleRef = ref<ComponentPublicInstance | null>(null)
 const sidebarRef = ref<HTMLElement | null>(null)
 const confirmDialog = useConfirmDialog()
 const isApiInfoOpen = ref(false)
-const isServiceDialogOpen = ref(false)
 const isUpdateDialogOpen = ref(false)
 const isCheckingUpdate = ref(false)
 const isUpdateConfirming = ref(false)
@@ -981,36 +930,6 @@ const canvasHref = computed(() => {
 })
 const themeButtonText = computed(() => themeOptions.find(option => option.value === themeMode.value)?.label || '系统')
 const themeButtonTitle = computed(() => `当前主题：${themeButtonText.value}，点击切换`)
-type HeaderServiceItem = {
-  key: string
-  label: string
-  detail?: string
-  href: string
-  icon: string
-}
-
-const headerServiceItems: HeaderServiceItem[] = [
-  {
-    key: 'service-qq',
-    label: 'QQ 交流群：1005859624',
-    href: 'https://qm.qq.com/q/yegwCqJisS',
-    icon: 'lucide:messages-square',
-  },
-  {
-    key: 'service-account',
-    label: '购买生图账号',
-    href: 'https://pay.ldxp.cn/shop/yukkcat',
-    icon: 'lucide:shopping-bag',
-  },
-  {
-    key: 'service-api',
-    label: '生图 API',
-    detail: '小量 ¥0.02/张 · 中转 ¥0.01/张 · 大量/企业 ¥0.009/张',
-    href: 'https://api.klong.lat',
-    icon: 'lucide:badge-dollar-sign',
-  },
-]
-
 const mobileHeaderMenuItems = computed<ActionMenuItem[]>(() => {
   const items: ActionMenuItem[] = []
   if (canvasHref.value) items.push({ key: 'canvas', label: '无限画布' })
@@ -1020,7 +939,6 @@ const mobileHeaderMenuItems = computed<ActionMenuItem[]>(() => {
       { key: 'updates', label: '版本更新' },
     )
   }
-  items.push({ key: 'services', label: '交流与服务', dividerBefore: items.length > 0 })
   return items
 })
 const routePendingText = computed(() => `正在加载${currentPageTitle.value}`)
@@ -1031,7 +949,7 @@ const routeProgressDelayMs = 140
 const routeProgressFinishMs = 140
 let routeProgressDelayTimer: number | null = null
 let routeProgressFinishTimer: number | null = null
-const defaultReleasePageUrl = 'https://github.com/yukkcat/chatgpt2api/releases'
+const defaultReleasePageUrl = 'https://github.com/Tmsdkdc/chatgpt2api/releases'
 const releasePageUrl = computed(() => updateStatus.value?.release_url || defaultReleasePageUrl)
 const updateCheckingMessage = '正在检查云端版本...'
 const updateTaskPollIntervalMs = 1000
@@ -1181,10 +1099,6 @@ async function openInfiniteCanvas() {
 }
 
 function handleHeaderMenuSelect(key: string) {
-  if (key === 'services') {
-    isServiceDialogOpen.value = true
-    return
-  }
   if (key === 'canvas') {
     void openInfiniteCanvas()
     return

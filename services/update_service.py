@@ -110,7 +110,7 @@ class ReleaseBundleInstaller:
             checksum_path = temp_dir / UPDATE_CHECKSUM_NAME
 
             if progress:
-                progress("downloading", 2, "下载更新包", "正在下载官方发布包与校验文件。")
+                progress("downloading", 2, "下载更新包", "正在下载发布包与校验文件。")
             self._download(archive_url, archive_path, max_bytes=UPDATE_DOWNLOAD_MAX_BYTES)
             self._download(checksum_url, checksum_path, max_bytes=1024 * 1024)
 

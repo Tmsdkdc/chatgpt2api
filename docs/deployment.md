@@ -2,12 +2,15 @@
 
 状态：当前
 
-本项目的发布镜像默认是 `ghcr.io/yukkcat/chatgpt2api:latest`。标准 Compose 将服务暴露在 `3000` 端口，使用 `chatgpt2api-runtime` 命名卷保存可更新的应用运行目录，并单独挂载本地 `data/` 和 `config.json`。运行时配置和数据不应提交到 Git。
+此 Fork 的更新与发布流程，以及现有腾讯云服务器的切换步骤，见
+[Fork 维护手册](runbooks/fork-release.md)。服务器需要先完成镜像切换，才会使用此 Fork 的后台更新源。
+
+本项目的发布镜像默认是 `ghcr.io/tmsdkdc/chatgpt2api:latest`。标准 Compose 将服务暴露在 `3000` 端口，使用 `chatgpt2api-runtime` 命名卷保存可更新的应用运行目录，并单独挂载本地 `data/` 和 `config.json`。运行时配置和数据不应提交到 Git。
 
 ## Docker 部署
 
 ```bash
-git clone https://github.com/yukkcat/chatgpt2api.git
+git clone https://github.com/Tmsdkdc/chatgpt2api.git
 cd chatgpt2api
 cp .env.example .env
 # 将 .env 中的 CHATGPT2API_AUTH_KEY=your_secret_key_here 替换为私有密钥。
@@ -53,7 +56,7 @@ docker compose -f docker-compose.yml -f docker-compose.postgres.yml logs -f post
 也可以使用仓库安装脚本：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/yukkcat/chatgpt2api/main/deploy/install.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/Tmsdkdc/chatgpt2api/main/deploy/install.sh | sudo bash
 ```
 
 安装脚本会明确询问 Application Database：
@@ -69,7 +72,7 @@ curl -fsSL https://raw.githubusercontent.com/yukkcat/chatgpt2api/main/deploy/ins
 后端：
 
 ```bash
-git clone https://github.com/yukkcat/chatgpt2api.git
+git clone https://github.com/Tmsdkdc/chatgpt2api.git
 cd chatgpt2api
 uv sync
 uv run main.py
@@ -150,7 +153,7 @@ docker compose -f docker-compose.yml -f docker-compose.postgres.yml pull
 docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d
 ```
 
-镜像部署固定或回退版本时，在 `.env` 设置 `CHATGPT2API_IMAGE=ghcr.io/yukkcat/chatgpt2api:<tag>`，再执行对应的 `pull` 与 `up`。镜像版本变化后，入口脚本会用该镜像刷新受管运行目录；Git 检出标签只影响源码运行，不会改变 Compose 使用的镜像版本。升级后检查：
+镜像部署固定或回退版本时，在 `.env` 设置 `CHATGPT2API_IMAGE=ghcr.io/tmsdkdc/chatgpt2api:<tag>`，再执行对应的 `pull` 与 `up`。镜像版本变化后，入口脚本会用该镜像刷新受管运行目录；Git 检出标签只影响源码运行，不会改变 Compose 使用的镜像版本。升级后检查：
 
 ```bash
 docker compose ps

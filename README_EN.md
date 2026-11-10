@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-v3.2.3-111827" alt="Version v3.2.3" />
+  <img src="https://img.shields.io/badge/version-v3.2.9-tmsdkdc.1-111827" alt="Version v3.2.9-tmsdkdc.1" />
   <img src="https://img.shields.io/badge/Python-3.13-3776AB?logo=python&logoColor=white" alt="Python 3.13" />
   <img src="https://img.shields.io/badge/Vue-3-4FC08D?logo=vue.js&logoColor=white" alt="Vue 3" />
   <img src="https://img.shields.io/badge/PostgreSQL-18-4169E1?logo=postgresql&logoColor=white" alt="PostgreSQL 18" />
@@ -20,12 +20,14 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/yukkcat/chatgpt2api/releases/tag/v3.2.3">v3.2.3 Release</a>
+  <a href="https://github.com/Tmsdkdc/chatgpt2api/releases">Fork Releases</a>
   · <a href="./CHANGELOG.md">Changelog</a>
   · <a href="./docs/README.md">Documentation</a>
 </p>
 
 <p align="center"><strong>QQ Group: 1005859624</strong></p>
+
+> This fork uses `Tmsdkdc/chatgpt2api` for images and online updates. See the [fork maintenance runbook](docs/runbooks/fork-release.md) for synchronization, releases and server migration.
 
 > [!IMPORTANT]
 > `v3.0.0` is a new release baseline. The remote `main` history has been consolidated, and older source history, Git tags, releases, and container images are no longer maintained as part of the current release line. Version 3.0 uses a new Application Database and cannot read the distributed storage used by 2.x directly. Reconfigure the service or re-import accounts after upgrading.
@@ -40,23 +42,18 @@
 ### One-click installer
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/yukkcat/chatgpt2api/main/deploy/install.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/Tmsdkdc/chatgpt2api/main/deploy/install.sh | sudo bash
 ```
 
 The installer lets you choose SQLite, a local PostgreSQL 18 container, or an existing PostgreSQL URL. SQLite requires no additional service. Local PostgreSQL is started and persisted automatically through Compose.
 
-To install the fixed `v3.2.3` release:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/yukkcat/chatgpt2api/v3.2.3/deploy/install.sh | sudo bash -s -- --branch v3.2.3
-```
 
 ### Docker Compose
 
 SQLite is used by default:
 
 ```bash
-git clone https://github.com/yukkcat/chatgpt2api.git
+git clone https://github.com/Tmsdkdc/chatgpt2api.git
 cd chatgpt2api
 cp .env.example .env
 # Edit .env and set a private CHATGPT2API_AUTH_KEY

@@ -24,6 +24,8 @@ The route source is
 | `/debug` | Redirect only | Redirects to `/studio`; it is not a separate page |
 
 `AppShell.vue` owns authenticated product navigation and header-level overlays.
+This fork removes the promotional services entry and dialog on both desktop and
+mobile. Source links and the fallback release page point to `Tmsdkdc/chatgpt2api`.
 Each page owns its responsive composition and has one explicit scroll owner per
 scrolling region.
 

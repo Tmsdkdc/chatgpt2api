@@ -177,6 +177,10 @@ animation, layout, and responsive behavior.
 
 ## Managed-container online update
 
+This fork resolves releases and changelogs from `Tmsdkdc/chatgpt2api`.
+The same source is used for update discovery and installation. Publishing is
+gated by `scripts/check_fork_release.py` before and after the console build.
+
 ```mermaid
 sequenceDiagram
     participant Shell as AppShell update overlay

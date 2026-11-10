@@ -1,6 +1,6 @@
 services:
   app:
-    image: ${CHATGPT2API_IMAGE:-ghcr.io/yukkcat/chatgpt2api:latest}
+    image: ${CHATGPT2API_IMAGE:-ghcr.io/tmsdkdc/chatgpt2api:latest}
     container_name: chatgpt2api
     restart: unless-stopped
     ports:
