@@ -20,12 +20,10 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Tmsdkdc/chatgpt2api/releases">Fork Releases</a>
+  <a href="https://github.com/Tmsdkdc/chatgpt2api/releases">Releases</a>
   · <a href="./CHANGELOG.md">Changelog</a>
   · <a href="./docs/README.md">Documentation</a>
 </p>
-
-<p align="center"><strong>QQ Group: 1005859624</strong></p>
 
 > This fork uses `Tmsdkdc/chatgpt2api` for images and online updates. See the [fork maintenance runbook](docs/runbooks/fork-release.md) for synchronization, releases and server migration.
 
@@ -46,7 +44,6 @@ curl -fsSL https://raw.githubusercontent.com/Tmsdkdc/chatgpt2api/main/deploy/ins
 ```
 
 The installer lets you choose SQLite, a local PostgreSQL 18 container, or an existing PostgreSQL URL. SQLite requires no additional service. Local PostgreSQL is started and persisted automatically through Compose.
-
 
 ### Docker Compose
 
@@ -85,13 +82,9 @@ DATABASE_URL=postgresql://user:password@host:5432/database
 
 See the [deployment guide](./docs/deployment.md) for upgrades, backups, PostgreSQL setup, and troubleshooting.
 
-## Project Scope
-
-ChatGPT2API is continuously developed from [basketikun/chatgpt2api](https://github.com/basketikun/chatgpt2api). It uses the ChatGPT Web protocol to expose the OpenAI-compatible interfaces implemented by this project.
-
 ## Capabilities
 
-Shared UI components, themes, and interaction primitives come from [yukkcat/nanocat-ui](https://github.com/yukkcat/nanocat-ui). This repository owns the product pages, backend state projections, and domain workflows.
+The console uses Vue 3 and nanocat-ui for its product pages, state displays, and interactive workflows.
 
 | | Area | Capabilities |
 | :---: | :--- | :--- |
@@ -233,23 +226,4 @@ If documentation conflicts with the implementation, the current code, tests, and
 
 The current repository is distributed under the [GNU Affero General Public License v3.0](./LICENSE) (`AGPL-3.0-only`). If you modify the software and make it available over a network, you must offer the corresponding source code to users of that service as required by the license.
 
-Code derived from [basketikun/chatgpt2api](https://github.com/basketikun/chatgpt2api) retains its original MIT copyright and license notice; see [NOTICE](./NOTICE). Versions previously released under MIT remain available under their original license.
-
-## Project Contributors
-
-<a href="https://github.com/yukkcat/chatgpt2api/graphs/contributors">
-  <img alt="ChatGPT2API Contributors" src="https://contrib.rocks/image?repo=yukkcat/chatgpt2api" />
-</a>
-
-## Original Project and Contributors
-
-This project evolved from [basketikun/chatgpt2api](https://github.com/basketikun/chatgpt2api). Thanks to the original author and all contributors:
-
-<a href="https://github.com/basketikun/chatgpt2api/graphs/contributors">
-  <img alt="Contributors" src="https://contrib.rocks/image?repo=basketikun/chatgpt2api" />
-</a>
-
-## Community and Links
-
-- QQ group: [1005859624](https://qm.qq.com/q/yegwCqJisS)
-- Community: [Linux.do](https://linux.do)
+Third-party copyright and license notices are provided in [NOTICE](./NOTICE).

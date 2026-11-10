@@ -17,6 +17,9 @@ PROMOTION_MARKERS = (
     "pay.ldxp.cn",
     "api.klong.lat",
     "交流与服务",
+    "www.ipwo.net",
+    "contrib.rocks/image",
+    "https://linux.do",
 )
 
 
@@ -25,20 +28,20 @@ def main() -> None:
     parser.add_argument("--dist", type=Path, help="Also scan an existing console build")
     args = parser.parse_args()
     errors: list[str] = []
-    roots = [ROOT / "web-vue/src"]
+    paths = list((ROOT / "web-vue/src").rglob("*"))
+    paths.extend((ROOT / "README.md", ROOT / "README_EN.md"))
     if args.dist:
         dist = args.dist if args.dist.is_absolute() else ROOT / args.dist
         if not (dist / "index.html").is_file():
             errors.append("Console build is missing index.html")
-        roots.append(dist)
-    for folder in roots:
-        for path in folder.rglob("*"):
-            if path.suffix not in {".vue", ".ts", ".js", ".css", ".html", ".json"}:
-                continue
-            content = path.read_text(encoding="utf-8")
-            for marker in PROMOTION_MARKERS:
-                if marker in content:
-                    errors.append(f"Promotion marker {marker!r} in {path.relative_to(ROOT)}")
+        paths.extend(dist.rglob("*"))
+    for path in paths:
+        if path.suffix not in {".vue", ".ts", ".js", ".css", ".html", ".json", ".md"}:
+            continue
+        content = path.read_text(encoding="utf-8")
+        for marker in PROMOTION_MARKERS:
+            if marker in content:
+                errors.append(f"Promotion marker {marker!r} in {path.relative_to(ROOT)}")
 
     tree = ast.parse((ROOT / "services/update_status_service.py").read_text(encoding="utf-8"))
     constants = {

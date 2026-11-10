@@ -37,6 +37,14 @@
 
 ## 文档变更触发条件
 
+### 此 Fork 的展示内容
+
+- 中英文 README 只保留项目介绍、功能、部署、接口、配置、开发与文档入口，不恢复原作者的商业推广、购买入口、社群友链、赞助商或贡献者展示区块。
+- 仓库 About 的 Website 不配置原作者或商业推广网站；该字段通过 GitHub 仓库设置维护，不由 README 控制。
+- 保留 LICENSE、NOTICE 和源码中的必要版权及许可声明。README 通过 NOTICE 链接提供版权说明，不复制作者介绍或推广内容。
+
+### 同步要求
+
 - 新增非简单功能、跨层行为或仍需确认的交互前，使用 `docs/requirements/_template.md` 建立 PRD；单一机械修改不强制建立 PRD。
 - 改变领域术语、权威所有者、持久化边界、公开契约或跨 Module 生命周期时，必须同步检查 `CONTEXT.md`、accepted ADR 和 `docs/maps/`。需要推翻或补充长期架构决策时，先新增 ADR。
 - 新增、删除或重命名路由、入口 Module、Repository、外部存储或关键流程时，必须在同一改动中更新对应 current map。

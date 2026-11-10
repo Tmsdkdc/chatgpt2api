@@ -20,7 +20,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Tmsdkdc/chatgpt2api/releases">Fork Releases</a>
+  <a href="https://github.com/Tmsdkdc/chatgpt2api/releases">版本发布</a>
   · <a href="./CHANGELOG.md">更新说明</a>
   · <a href="./docs/README.md">维护文档</a>
 </p>
@@ -34,27 +34,6 @@
 > 本项目通过逆向研究接入 ChatGPT 官网的文本、图片和文件生成能力，并非 OpenAI 官方服务。接口可能随上游变化失效，并可能导致账号受限、临时或永久封禁；请勿使用重要、常用或高价值账号。
 >
 > 使用者须自行了解技术、账号与合规风险，遵守 OpenAI 服务条款及当地法律法规。严禁用于批量滥用、恶意竞争、账号盗用、诈骗、骚扰，以及生成或传播违法、暴力、色情或涉及未成年人的内容；使用者自行承担全部风险与责任。
-
-<p align="center">
-  <a href="https://qm.qq.com/q/yegwCqJisS">QQ 交流群：1005859624</a>
-  &nbsp;&nbsp;·&nbsp;&nbsp; <a href="https://pay.ldxp.cn/shop/yukkcat">购买生图账号</a>
-  &nbsp;&nbsp;·&nbsp;&nbsp; <a href="https://api.klong.lat">生图 API：小量 ¥0.02/张 · 中转 ¥0.01/张 · 大量/企业 ¥0.009/张</a>
-</p>
-
-## 赞助商
-
-<table width="100%">
-  <tr>
-    <td align="center" valign="middle">
-      <a href="https://www.ipwo.net/?ref=githubchatgpt2api"><img src="docs/images/IPWO.png" width="100%" alt="IPWO住宅代理"></a>
-    </td>
-  </tr>
-  <tr>
-    <td valign="middle">
-      &nbsp;<strong><a href="https://www.ipwo.net/?ref=githubchatgpt2api"><u>IPWO</u></a></strong>&nbsp;覆盖195+地区动态住宅代理、静态住宅代理和不限量住宅代理支持HTTP、HTTPS及SOCKS5协议，为AI应用、多账号管理、自动化及海外网络访问提供灵活的代理解决方案。优惠码：<strong>0205</strong>，即可减免10%。
-    </td>
-  </tr>
-</table>
 
 ## 快速部署
 
@@ -105,7 +84,7 @@ DATABASE_URL=postgresql://user:password@host:5432/database
 
 ## 核心能力
 
-通用 UI 组件、主题和基础交互来自 [yukkcat/nanocat-ui](https://github.com/yukkcat/nanocat-ui)；本项目负责业务页面、后端状态投影和产品流程。
+控制台使用 Vue 3 和 nanocat-ui，提供业务页面、状态展示与交互流程。
 
 |       | 领域       | 能力                                                                                                           |
 | :---: | :--------- | :------------------------------------------------------------------------------------------------------------- |
@@ -247,23 +226,4 @@ npm run dev
 
 本仓库当前版本以 [GNU Affero General Public License v3.0](./LICENSE)（`AGPL-3.0-only`）发布。修改后通过网络提供服务时，须按协议向服务用户提供对应源码。
 
-源自 [basketikun/chatgpt2api](https://github.com/basketikun/chatgpt2api) 的代码继续保留原 MIT 版权与许可声明，详见 [NOTICE](./NOTICE)。此前已按 MIT 发布的版本仍适用其原许可证。
-
-## 本项目贡献者
-
-<a href="https://github.com/yukkcat/chatgpt2api/graphs/contributors">
-  <img alt="ChatGPT2API Contributors" src="https://contrib.rocks/image?repo=yukkcat/chatgpt2api" />
-</a>
-
-## 原版项目与贡献者
-
-本项目基于 [basketikun/chatgpt2api](https://github.com/basketikun/chatgpt2api) 演进。感谢原项目作者与所有贡献者：
-
-<a href="https://github.com/basketikun/chatgpt2api/graphs/contributors">
-  <img alt="Contributors" src="https://contrib.rocks/image?repo=basketikun/chatgpt2api" />
-</a>
-
-## 社区与友链
-
-- QQ 交流群：[1005859624](https://qm.qq.com/q/yegwCqJisS)
-- 社区：[Linux.do](https://linux.do)
+第三方代码的版权与许可说明见 [NOTICE](./NOTICE)。
