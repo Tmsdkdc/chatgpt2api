@@ -205,3 +205,9 @@ sequenceDiagram
 modes. The frontend only confirms, starts, polls, and renders progress. Update
 task state is persisted in `data/update_task.json`; the container runtime owns
 restarting the process after exit.
+
+The console automatically reloads only for a succeeded task initiated by the
+current browser, after `/version` confirms the task's target is running and the
+loaded console bundle has a different version. It consumes the browser's active
+task marker before navigation. Historical completed tasks do not trigger reloads,
+and a cached older bundle cannot repeatedly reload the same task.

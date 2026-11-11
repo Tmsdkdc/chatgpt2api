@@ -1215,7 +1215,8 @@ async function pollUpdateTask() {
   try {
     const task = await versionApi.updateTask()
     const activeTaskId = getStringPreference(preferenceKeys.updateActiveTaskId)
-    const shouldOpen = task.busy || Boolean(task.task_id && task.task_id === activeTaskId)
+    const isActiveBrowserTask = Boolean(task.task_id && task.task_id === activeTaskId)
+    const shouldOpen = task.busy || isActiveBrowserTask
     applyUpdateTask(task, shouldOpen)
     if (task.busy) {
       scheduleUpdateTaskPoll()
@@ -1226,10 +1227,16 @@ async function pollUpdateTask() {
     const targetTag = normalizeVersionTag(task.latest_tag)
     if (
       !updateReloadScheduled
+      && isActiveBrowserTask
       && task.state === 'succeeded'
       && targetTag
       && normalizeVersionTag(localVersion) !== targetTag
     ) {
+      const runningTag = await loadCurrentVersion()
+      if (runningTag !== targetTag) return
+      // Consume the browser's task marker before navigation so a cached bundle
+      // cannot reload repeatedly when it observes the same completed task.
+      removePreference(preferenceKeys.updateActiveTaskId)
       updateReloadScheduled = true
       window.setTimeout(() => window.location.reload(), 400)
     }
@@ -1273,12 +1280,16 @@ async function checkForUpdates(showMessage = true, openAvailable = false) {
   }
 }
 
-async function loadCurrentVersion() {
+async function loadCurrentVersion(): Promise<string> {
   try {
     const result = await versionApi.current()
     const runtimeVersion = String(result.tag || '').trim()
-    if (runtimeVersion) currentVersionTag.value = runtimeVersion
+    if (runtimeVersion) {
+      currentVersionTag.value = runtimeVersion
+      return normalizeVersionTag(runtimeVersion)
+    }
   } catch {}
+  return ''
 }
 
 function handleSystemThemeChange() {
