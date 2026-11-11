@@ -51,7 +51,7 @@ backend business meaning from raw fields or error text.
 | Editable File Assets | Published and staging filesystem directories | `EditableFileTaskService` |
 | Active Requests and live operation counters | Process memory | `RealtimeMonitorService` |
 | Online-update task progress | `data/update_task.json` | `UpdateService` |
-| Studio conversation presentation state | Browser-local storage | Studio conversation runtimes |
+| Studio conversation presentation state and reference images | Browser IndexedDB; original localStorage retained after migration | Studio conversation persistence runtime |
 
 One physical Application Database does not create one generic repository or one
 transaction boundary. Image Assets, Image Tasks, gallery files, and live

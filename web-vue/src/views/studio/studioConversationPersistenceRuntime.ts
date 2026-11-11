@@ -1,131 +1,164 @@
-import { type Ref, watch } from 'vue'
-import { getStringPreference, preferenceKeys, setStringPreference } from '@/lib/preferences'
-import { scheduleIdleTask, type IdleTaskHandle } from '@/lib/idleTask'
+import { ref, type Ref, watch } from 'vue'
+import { getStringPreference, preferenceKeys } from '@/lib/preferences'
 import type { StudioConversation, StudioConversationBadgeState } from '@/components/studio/types'
-import {
-  loadStudioConversationNotices,
-  loadStudioConversations,
-  persistStudioConversationNotices,
-  persistStudioConversations,
-} from './studioConversationState'
+import { loadStudioConversationNotices, loadStudioConversations, normalizeStudioConversations, studioConversationSnapshot } from './studioConversationState'
+import { readStudioConversationSnapshot, writeStudioConversationSnapshot } from './studioConversationStorage'
 
-type StudioConversationIdSetRef = {
-  value: Set<string>
+type StudioConversationPersistenceState = {
+  schema: 1
+  conversations: StudioConversation[]
+  conversationNotices: Record<string, StudioConversationBadgeState>
+  activeConversationId: string
 }
 
 export type StudioConversationPersistenceRuntimeInput = {
   conversations: Ref<StudioConversation[]>
   conversationNotices: Ref<Record<string, StudioConversationBadgeState>>
   activeConversationId: Ref<string>
-  validConversationIds: StudioConversationIdSetRef
+  validConversationIds: { value: Set<string> }
 }
 
-export function loadStudioConversationPersistenceState() {
-  return {
+export async function loadStudioConversationPersistenceState(): Promise<StudioConversationPersistenceState> {
+  const saved = await readStudioConversationSnapshot()
+  if (saved !== undefined) {
+    const parsed = JSON.parse(saved) as Partial<StudioConversationPersistenceState> | null
+    if (!parsed || parsed.schema !== 1 || !Array.isArray(parsed.conversations)
+      || typeof parsed.activeConversationId !== 'string' || !parsed.conversationNotices
+      || typeof parsed.conversationNotices !== 'object' || Array.isArray(parsed.conversationNotices)) {
+      throw new Error('Invalid Studio history snapshot')
+    }
+    return { ...parsed, conversations: normalizeStudioConversations(parsed.conversations) } as StudioConversationPersistenceState
+  }
+  const legacy: StudioConversationPersistenceState = {
+    schema: 1,
     activeConversationId: getStringPreference(preferenceKeys.studioActiveConversationId, ''),
     conversationNotices: loadStudioConversationNotices(),
     conversations: loadStudioConversations(),
   }
+  // Commit migration before accepting edits. Keep localStorage untouched as a
+  // legacy backup; failed migration must never replace the original records.
+  await writeStudioConversationSnapshot(JSON.stringify(legacy))
+  return legacy
 }
 
 export type StudioConversationPersistenceRuntime = ReturnType<typeof useStudioConversationPersistenceRuntime>
 
 export function useStudioConversationPersistenceRuntime(input: StudioConversationPersistenceRuntimeInput) {
-  let conversationsTimer: number | null = null
-  let conversationNoticesTimer: number | null = null
-  let activeConversationTimer: number | null = null
-  let conversationsIdleTask: IdleTaskHandle | null = null
-  let conversationNoticesIdleTask: IdleTaskHandle | null = null
+  const ready = ref(false)
+  const loading = ref(false)
+  const saving = ref(false)
+  const error = ref('')
+  let dirty = false
+  let scheduled = false
+  let pending: string | null = null
+  let savingPromise: Promise<void> | null = null
+  let loadingPromise: Promise<boolean> | null = null
+  let disposed = false
 
-  const stopConversationWatch = watch(input.conversations, scheduleConversations)
-  const stopConversationNoticeWatch = watch(input.conversationNotices, scheduleConversationNotices)
-  const stopActiveConversationWatch = watch(input.activeConversationId, scheduleActiveConversationId)
+  const stopConversationWatch = watch(input.conversations, scheduleSave, { flush: 'sync' })
+  const stopNoticeWatch = watch(input.conversationNotices, scheduleSave, { flush: 'sync' })
+  const stopActiveWatch = watch(input.activeConversationId, scheduleSave, { flush: 'sync' })
 
-  function scheduleConversations() {
-    if (conversationsTimer !== null) return
-    conversationsTimer = window.setTimeout(() => {
-      conversationsTimer = null
-      conversationsIdleTask?.cancel()
-      conversationsIdleTask = scheduleIdleTask(() => {
-        conversationsIdleTask = null
-        persistStudioConversations(input.conversations.value)
-      }, 1200)
-    }, 300)
+  function scheduleSave() {
+    if (!ready.value || disposed) return
+    dirty = true
+    saving.value = true
+    if (scheduled) return
+    scheduled = true
+    queueMicrotask(() => { scheduled = false; void flush() })
   }
 
-  function scheduleConversationNotices() {
-    if (conversationNoticesTimer !== null) return
-    conversationNoticesTimer = window.setTimeout(() => {
-      conversationNoticesTimer = null
-      conversationNoticesIdleTask?.cancel()
-      conversationNoticesIdleTask = scheduleIdleTask(() => {
-        conversationNoticesIdleTask = null
-        persistStudioConversationNotices(input.conversationNotices.value, input.validConversationIds.value)
-      }, 1200)
-    }, 300)
+  function snapshot() {
+    return JSON.stringify({
+      schema: 1,
+      conversations: studioConversationSnapshot(input.conversations.value),
+      conversationNotices: Object.fromEntries(Object.entries(input.conversationNotices.value).filter(
+        ([id, state]) => input.validConversationIds.value.has(id) && (state === 'done' || state === 'error'),
+      )),
+      activeConversationId: input.activeConversationId.value,
+    })
   }
 
-  function scheduleActiveConversationId() {
-    if (activeConversationTimer !== null) {
-      window.clearTimeout(activeConversationTimer)
+  async function drain() {
+    while (pending !== null) {
+      const payload = pending
+      pending = null
+      try {
+        await writeStudioConversationSnapshot(payload)
+        error.value = ''
+      } catch {
+        // Preserve the newest queued snapshot for an explicit retry.
+        if (pending === null) pending = payload
+        error.value = '聊天记录保存失败，请保留此页面并重试。'
+        break
+      }
     }
-    activeConversationTimer = window.setTimeout(() => {
-      activeConversationTimer = null
-      setStringPreference(preferenceKeys.studioActiveConversationId, input.activeConversationId.value)
-    }, 200)
+    saving.value = dirty || pending !== null
+    savingPromise = null
   }
 
-  function flushConversations() {
-    if (conversationsTimer !== null) {
-      window.clearTimeout(conversationsTimer)
-      conversationsTimer = null
+  function flush(): Promise<void> {
+    if (!ready.value) return Promise.resolve()
+    if (dirty) {
+      try { pending = snapshot(); dirty = false } catch {
+        error.value = '聊天记录保存失败，请保留此页面并重试。'
+        return Promise.resolve()
+      }
     }
-    if (conversationsIdleTask) {
-      conversationsIdleTask.flush()
-      conversationsIdleTask = null
-      return
-    }
-    persistStudioConversations(input.conversations.value)
+    if (savingPromise) return savingPromise
+    if (pending === null) return Promise.resolve()
+    saving.value = true
+    savingPromise = drain()
+    return savingPromise
   }
 
-  function flushConversationNotices() {
-    if (conversationNoticesTimer !== null) {
-      window.clearTimeout(conversationNoticesTimer)
-      conversationNoticesTimer = null
-    }
-    if (conversationNoticesIdleTask) {
-      conversationNoticesIdleTask.flush()
-      conversationNoticesIdleTask = null
-      return
-    }
-    persistStudioConversationNotices(input.conversationNotices.value, input.validConversationIds.value)
+  function load(): Promise<boolean> {
+    if (ready.value) return Promise.resolve(true)
+    if (loadingPromise) return loadingPromise
+    loading.value = true
+    loadingPromise = (async () => {
+      try {
+        const state = await loadStudioConversationPersistenceState()
+        if (disposed) return false
+        input.conversations.value = state.conversations
+        input.conversationNotices.value = state.conversationNotices
+        input.activeConversationId.value = state.activeConversationId
+        error.value = ''
+        ready.value = true
+        return true
+      } catch {
+        error.value = '聊天记录读取失败，原有数据已保留，请重试。'
+        return false
+      } finally { loading.value = false; loadingPromise = null }
+    })()
+    return loadingPromise
   }
 
-  function flushActiveConversationId() {
-    if (activeConversationTimer !== null) {
-      window.clearTimeout(activeConversationTimer)
-      activeConversationTimer = null
+  function beforeUnload(event: BeforeUnloadEvent) {
+    void flush()
+    if (dirty || pending !== null || savingPromise) {
+      event.preventDefault()
+      event.returnValue = ''
     }
-    setStringPreference(preferenceKeys.studioActiveConversationId, input.activeConversationId.value)
   }
-
-  function flush() {
-    if (conversationsTimer !== null || conversationsIdleTask) flushConversations()
-    if (conversationNoticesTimer !== null || conversationNoticesIdleTask) flushConversationNotices()
-    if (activeConversationTimer !== null) flushActiveConversationId()
-  }
+  const pageHide = () => { void flush() }
+  window.addEventListener('beforeunload', beforeUnload)
+  window.addEventListener('pagehide', pageHide)
 
   function dispose() {
     stopConversationWatch()
-    stopConversationNoticeWatch()
-    stopActiveConversationWatch()
-    flush()
+    stopNoticeWatch()
+    stopActiveWatch()
+    void flush()
+    disposed = true
+    window.removeEventListener('beforeunload', beforeUnload)
+    window.removeEventListener('pagehide', pageHide)
   }
 
   return {
-    flush,
-    scheduleConversationNotices,
-    scheduleConversations,
+    ready, loading, saving, error, load, flush,
+    scheduleConversationNotices: scheduleSave,
+    scheduleConversations: scheduleSave,
     dispose,
   }
 }

@@ -42,13 +42,13 @@ export function useStudioImageTaskRuntime(input: StudioImageTaskRuntimeInput) {
     const ids = input.activeConversation.value?.messages
       .map((message) => message.taskId)
       .filter((id): id is string => Boolean(id)) || []
-    return Array.from(new Set(ids)).slice(0, 80)
+    return Array.from(new Set(ids))
   })
   const pendingImageTaskIds = computed(() => input.conversationRuntimeIndex.value.pendingImageTaskIds)
   const requestedImageTaskIds = computed(() => Array.from(new Set([
     ...activeImageTaskIds.value,
     ...pendingImageTaskIds.value,
-  ])).slice(0, 180))
+  ])))
   const activeRunningTaskCount = computed(() => {
     const conversation = input.activeConversation.value
     if (!conversation) return 0

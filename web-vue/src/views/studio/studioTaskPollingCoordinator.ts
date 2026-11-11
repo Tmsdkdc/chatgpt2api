@@ -57,7 +57,15 @@ export function useStudioTaskPollingCoordinator<Task>(
     const requestSeq = input.pageRuntime.nextRequest(input.requestKey)
     isFetchingTasks.value = true
     try {
-      const response = await input.loadTasks(ids)
+      const response: StudioTaskListResponse<Task> = { items: [], missing_ids: [] }
+      // Histories no longer truncate old messages. Keep each request bounded
+      // while restoring every referenced task, including the newest results.
+      for (let offset = 0; offset < ids.length; offset += 100) {
+        const batch = await input.loadTasks(ids.slice(offset, offset + 100))
+        if (!input.pageRuntime.isLatestRequest(input.requestKey, requestSeq)) return
+        response.items.push(...batch.items)
+        response.missing_ids.push(...batch.missing_ids)
+      }
       if (!input.pageRuntime.isLatestRequest(input.requestKey, requestSeq)) return
       input.applyResponse(response)
       input.onRefreshSuccess?.()

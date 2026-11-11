@@ -40,13 +40,13 @@ export function useStudioFileTaskRuntime(input: StudioFileTaskRuntimeInput) {
       .filter((message) => !message.fileTaskDeleted)
       .map((message) => message.fileTaskId)
       .filter((id): id is string => Boolean(id)) || []
-    return Array.from(new Set(ids)).slice(0, 80)
+    return Array.from(new Set(ids))
   })
   const pendingFileTaskIds = computed(() => input.conversationRuntimeIndex.value.pendingFileTaskIds)
   const requestedFileTaskIds = computed(() => Array.from(new Set([
     ...activeFileTaskIds.value,
     ...pendingFileTaskIds.value,
-  ])).slice(0, 180))
+  ])))
 
   function mergeTaskItems(items: EditableFileTask[]) {
     const tasks = new Map(fileTasks.value.map((task) => [task.id, task]))

@@ -29,6 +29,15 @@ mobile. Source links and the fallback release page point to `Tmsdkdc/chatgpt2api
 Each page owns its responsive composition and has one explicit scroll owner per
 scrolling region.
 
+Studio's conversation persistence runtime owns hydration, serialized saves,
+retry state and unload protection. Its IndexedDB adapter stores one atomic
+snapshot of messages (including reference images), active conversation and
+notices. Hydration finishes before editing and task polling begin; the original
+localStorage history is retained after one-time migration. See the
+[history runbook](../runbooks/studio-history.md) for recovery and rollback limits.
+Image/file polling restores referenced tasks in batches of at most 100 IDs
+instead of silently dropping newer task IDs from long conversations.
+
 Accounts also renders backend-projected memory state and actions. Its existing
 filter toolbar, scoped selection, account menus and operation drawer handle
 single and batch memory refresh/enable/disable/clear. The switch-state filter

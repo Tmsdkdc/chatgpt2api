@@ -1,5 +1,12 @@
 <template>
   <div class="studio-workspace" :class="{ 'is-fullscreen': isFullscreen }" :style="workspaceStyle">
+    <div v-if="!historyReady" class="studio-history-loading" role="status">
+      <p>{{ historyError || '正在读取聊天记录…' }}</p>
+      <Button v-if="historyError" size="sm" variant="outline" :disabled="historyLoading" @click="initializeStudio">
+        重新读取
+      </Button>
+    </div>
+    <template v-else>
     <div class="studio-sidebar-wrap">
       <StudioHistoryPanel
         :conversations="conversations"
@@ -22,7 +29,7 @@
       ></div>
     </div>
 
-    <main class="studio-main">
+    <main class="studio-main" :class="{ 'has-history-error': historyError }">
       <div class="chat-header-bar">
         <div class="chat-header-title">
           <Button
@@ -38,7 +45,7 @@
           </Button>
           <div class="min-w-0">
             <div class="chat-header-name">{{ activeConversation?.title || '新对话' }}</div>
-            <div class="chat-header-subtitle">{{ activeHeaderSubtitle }}</div>
+            <div class="chat-header-subtitle">{{ historyError ? '聊天记录尚未保存' : historySaving ? '正在保存聊天记录…' : activeHeaderSubtitle }}</div>
           </div>
         </div>
 
@@ -71,6 +78,10 @@
         </div>
       </div>
 
+      <div v-if="historyError" class="studio-history-error" role="alert">
+        <span>{{ historyError }}</span>
+        <Button size="sm" variant="outline" @click="conversationPersistenceRuntime.flush">重试保存</Button>
+      </div>
       <div ref="studioContentRef" class="studio-content-layout">
         <div class="studio-conversation-column">
           <StudioMessageList
@@ -212,13 +223,14 @@
       @close="isRecentFileTasksOpen = false"
       @deleted="handleFileTaskDeleted"
     />
+    </template>
   </div>
 </template>
 
 <script setup lang="ts">
 import { Icon } from '@iconify/vue'
 import { Button, DrawerShell } from 'nanocat-ui'
-import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useToast } from '@/composables/useToast'
 import { useConfirmDialog } from '@/composables/useConfirmDialog'
 import { usePageRuntime } from '@/composables/usePageRuntime'
@@ -237,10 +249,7 @@ import { studioErrorMessage } from '@/views/studio/studioRequestView'
 import { useStudioChatStreamRuntime } from '@/views/studio/studioChatStreamRuntime'
 import { useStudioComposerRuntime } from '@/views/studio/studioComposerRuntime'
 import { useStudioConversationActionsRuntime } from '@/views/studio/studioConversationActionsRuntime'
-import {
-  loadStudioConversationPersistenceState,
-  useStudioConversationPersistenceRuntime,
-} from '@/views/studio/studioConversationPersistenceRuntime'
+import { useStudioConversationPersistenceRuntime } from '@/views/studio/studioConversationPersistenceRuntime'
 import { useStudioConversationSelectionRuntime } from '@/views/studio/studioConversationSelectionRuntime'
 import { useStudioFileTaskRuntime } from '@/views/studio/studioFileTaskRuntime'
 import { useStudioImageTaskRuntime } from '@/views/studio/studioImageTaskRuntime'
@@ -282,7 +291,6 @@ const confirmDialog = useConfirmDialog()
 const pageRuntime = usePageRuntime('studio')
 const composerRuntime = useStudioComposerRuntime()
 const referenceRuntime = useStudioReferenceRuntime()
-const persistedConversationState = loadStudioConversationPersistenceState()
 const modelFormRuntime = useStudioModelFormRuntime()
 
 const composeMode = composerRuntime.composeMode
@@ -328,9 +336,9 @@ const imageHighResolutionEnabled = modelFormRuntime.imageHighResolutionEnabled
 const imageGifEnabled = modelFormRuntime.imageGifEnabled
 const imageMaxN = modelFormRuntime.imageMaxN
 
-const conversations = ref<StudioConversation[]>(persistedConversationState.conversations)
-const activeConversationId = ref(persistedConversationState.activeConversationId)
-const conversationNotices = ref<Record<string, StudioConversationBadgeState>>(persistedConversationState.conversationNotices)
+const conversations = ref<StudioConversation[]>([])
+const activeConversationId = ref('')
+const conversationNotices = ref<Record<string, StudioConversationBadgeState>>({})
 const conversationLookup = computed<StudioConversationLookup>(() => buildStudioConversationLookup(conversations.value))
 const conversationRuntimeIndex = computed<StudioConversationRuntimeIndex>(() => buildStudioConversationRuntimeIndex(conversations.value))
 const validConversationIds = computed(() => conversationLookup.value.validIds)
@@ -340,6 +348,10 @@ const conversationPersistenceRuntime = useStudioConversationPersistenceRuntime({
   activeConversationId,
   validConversationIds,
 })
+const historyReady = conversationPersistenceRuntime.ready
+const historyLoading = conversationPersistenceRuntime.loading
+const historySaving = conversationPersistenceRuntime.saving
+const historyError = conversationPersistenceRuntime.error
 const activeConversation = computed(() => {
   return conversationLookup.value.byId.get(activeConversationId.value)
     || conversations.value[0]
@@ -825,8 +837,11 @@ function ensureActiveConversation() {
   }
 }
 
-function initializeStudio() {
+async function initializeStudio() {
+  if (!await conversationPersistenceRuntime.load() || !pageRuntime.isActive.value) return
   ensureActiveConversation()
+  await nextTick()
+  bindSearchSourceLayoutObserver()
   void modelFormRuntime.loadModelCatalog(true)
   scheduleModelCatalogRefresh()
   void preloadPromptLibrary()
@@ -837,6 +852,7 @@ function initializeStudio() {
 }
 
 function activateStudio() {
+  if (!historyReady.value) { void initializeStudio(); return }
   void modelFormRuntime.loadModelCatalog(true)
   scheduleModelCatalogRefresh()
   void imageTaskRuntime.refresh()
@@ -850,7 +866,7 @@ function deactivateStudio() {
   imageTaskRuntime.deactivate()
   fileTaskRuntime.deactivate()
   stopTransientStudioUi()
-  conversationPersistenceRuntime.flush()
+  void conversationPersistenceRuntime.flush()
 }
 
 function disposeStudio() {
@@ -859,7 +875,7 @@ function disposeStudio() {
   imageTaskRuntime.dispose()
   fileTaskRuntime.dispose()
   chatStreamRuntime.dispose()
-  conversationPersistenceRuntime.flush()
+  void conversationPersistenceRuntime.flush()
   conversationPersistenceRuntime.dispose()
   conversationSelectionRuntime.dispose()
   layoutRuntime.dispose()
@@ -883,7 +899,7 @@ function scheduleModelCatalogRefresh() {
 
 pageRuntime.onActivate(({ initial }) => {
   if (initial) {
-    initializeStudio()
+    void initializeStudio()
     return
   }
   activateStudio()
@@ -913,6 +929,31 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+.studio-history-loading {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  color: hsl(var(--muted-foreground));
+}
+
+.studio-history-error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  flex-shrink: 0;
+  color: hsl(var(--destructive));
+}
+
+.studio-main.has-history-error {
+  grid-template-rows: auto auto minmax(0, 1fr);
+}
+
 .studio-workspace {
   --studio-content-width: min(100%, clamp(48rem, 68vw, 78rem));
   --ui-card-border: hsl(var(--border));

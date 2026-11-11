@@ -7,7 +7,7 @@ import type {
   StudioMessageStatus,
   StudioReferenceImage,
 } from '@/components/studio/types'
-import { getJsonPreference, preferenceKeys, setJsonPreference } from '@/lib/preferences'
+import { getJsonPreference, getStringPreference, preferenceKeys } from '@/lib/preferences'
 import {
   cleanStudioSearchAnswer,
   cleanStudioText,
@@ -54,9 +54,15 @@ export function buildStudioConversationTitle(content: string) {
 }
 
 export function loadStudioConversations(): StudioConversation[] {
-  const items = getJsonPreference<unknown[]>(preferenceKeys.studioConversations, [])
+  const raw = getStringPreference(preferenceKeys.studioConversations)
+  const items: unknown = raw ? JSON.parse(raw) : []
+  if (!Array.isArray(items)) throw new Error('Invalid legacy Studio history')
+  return normalizeStudioConversations(items)
+}
+
+export function normalizeStudioConversations(items: unknown): StudioConversation[] {
   if (!Array.isArray(items)) return []
-  return items.map(normalizeStudioConversation).filter((item): item is StudioConversation => Boolean(item)).slice(0, 80)
+  return items.map(normalizeStudioConversation).filter((item): item is StudioConversation => Boolean(item))
 }
 
 export function loadStudioConversationNotices(): Record<string, StudioConversationBadgeState> {
@@ -68,25 +74,14 @@ export function loadStudioConversationNotices(): Record<string, StudioConversati
   return notices
 }
 
-export function persistStudioConversations(conversations: StudioConversation[]) {
-  const payload = conversations.slice(0, 80).map((conversation) => ({
+export function studioConversationSnapshot(conversations: StudioConversation[]) {
+  return conversations.map((conversation) => ({
     ...conversation,
-    messages: conversation.messages.slice(-160).map((message) => ({
+    messages: conversation.messages.map((message) => ({
       ...message,
       status: message.status === 'streaming' || message.status === 'sending' ? 'done' : message.status,
     })),
   }))
-  setJsonPreference(preferenceKeys.studioConversations, payload)
-}
-
-export function persistStudioConversationNotices(
-  notices: Record<string, StudioConversationBadgeState>,
-  validIds: Set<string>,
-) {
-  const payload = Object.fromEntries(
-    Object.entries(notices).filter(([id, state]) => validIds.has(id) && (state === 'done' || state === 'error')),
-  )
-  setJsonPreference(preferenceKeys.studioConversationBadges, payload)
 }
 
 export function buildStudioConversationLookup(conversations: StudioConversation[]): StudioConversationLookup {
@@ -130,8 +125,8 @@ export function buildStudioConversationRuntimeIndex(conversations: StudioConvers
   })
 
   return {
-    pendingImageTaskIds: Array.from(pendingImageIds).slice(0, 160),
-    pendingFileTaskIds: Array.from(pendingFileIds).slice(0, 160),
+    pendingImageTaskIds: Array.from(pendingImageIds),
+    pendingFileTaskIds: Array.from(pendingFileIds),
     runningCounts,
     imageTaskMessageEntries,
     fileTaskMessageEntries,
@@ -150,7 +145,7 @@ function normalizeStudioConversation(item: unknown): StudioConversation | null {
   if (!item || typeof item !== 'object') return null
   const raw = item as Partial<StudioConversation>
   const messages = Array.isArray(raw.messages)
-    ? raw.messages.map(normalizeStudioMessage).filter((message): message is StudioMessage => Boolean(message)).slice(-160)
+    ? raw.messages.map(normalizeStudioMessage).filter((message): message is StudioMessage => Boolean(message))
     : []
   return {
     id: cleanStudioText(raw.id) || createStudioId('studio'),

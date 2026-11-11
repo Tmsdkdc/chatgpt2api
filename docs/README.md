@@ -52,6 +52,7 @@ Executable documentation rules live in
 | [`prompt-library-architecture.md`](prompt-library-architecture.md) | current | Prompt source and library projection lifecycle |
 | [`deployment.md`](deployment.md) | current | Docker, source development, backup, and upgrade guidance |
 | [`runbooks/fork-release.md`](runbooks/fork-release.md) | current | Fork synchronization, release policy and migration of the existing Tencent deployment |
+| [`runbooks/studio-history.md`](runbooks/studio-history.md) | current | Browser-local Studio history migration, save failures and rollback limits |
 | [`upstream-sse-conversation.md`](upstream-sse-conversation.md) | current | Internal Conversation SSE and result-resolution reference |
 
 ## Documentation rules
